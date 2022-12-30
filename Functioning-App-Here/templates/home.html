@@ -7,11 +7,23 @@
 </head>
 
 <body>
-    <div><h1>Welcome to home</h1></div>
+    <div><h1>Welcome back {{ username }}</h1></div>
 
-    {% for element in items %}
-        <p>{{ element }} </p>
+    <form action="http://localhost:8080/cart" method="get">
+        <input type="submit" value="View Cart">
+    </form>
+
+    {% for object_id, object_name, object_image_url, num_in_stock, description in cart_infos %}
+        <p>Name: {{ object_name }} </p>
+        <p><img src="{{ object_image_url }}" width="400" 
+            height="400"></p>
+        <p>Description: {{ description }} </p>
+        <p>Num in stock: {{ num_in_stock }} </p>
+        <form action="http://localhost:8080/add-to-cart" method="post">
+            <input type="submit" value="add to cart" name="{{ object_id }}">
+        </form>
     {% endfor %}
+
 </body>
 
 </html>

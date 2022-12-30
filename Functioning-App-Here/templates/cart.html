@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FlaskApp</title>
+</head>
+
+<body>
+    <div><h1>Welcome {{ username }}</h1></div>
+
+    <form action="http://localhost:8080/" method="get">
+        <input type="submit" value="Home">
+    </form>
+
+    {% for object_id, num_in_cart, object_name, description, object_image_url, object_name in cart_infos %}
+        <p>Name: {{ object_name }} </p>
+        <p><img src="{{ object_image_url }}" width="400" 
+            height="400"></p>
+        <p>Description: {{ description }} </p>
+        <p>Num in cart: {{ num_in_cart }} </p>
+        <form action="http://localhost:8080/remove-from-cart" method="post">
+            <input type="submit" value="remove from cart" name="{{ object_id }}">
+        </form>
+    {% endfor %}
+
+</body>
+
+</html>

@@ -1,56 +1,74 @@
-from urllib import parse
-from flask import Flask, redirect, render_template, request, session, url_for
-from views import views
-import sqlite3, hashlib, os
+from flask import Flask, redirect, render_template, request, url_for
+from repository import (
+    get_user_info_login,
+    get_object_store,
+    add_obj_to_cart,
+    get_user_cart,
+    remove_obj_from_cart
+)
 
 app = Flask(__name__)
-app.register_blueprint(views, url_prefix='/views')
 
-def getLoginDetails():
-    with sqlite3.connect('database.db') as conn:
-        cur = conn.cursor()
-        if 'email' not in session:
-            loggedIn = False
-            firstName = ''
-            noOfItems = 0
-        else:
-            loggedIn = True
-            cur.execute("SELECT userId, firstName FROM users WHERE email = ?", (session['email'], ))
-            userId, firstName = cur.fetchone()
-            cur.execute("SELECT count(productId) FROM kart WHERE userId = ?", (userId, ))
-            noOfItems = cur.fetchone()[0]
-    conn.close()
-    return (loggedIn, firstName, noOfItems)
+# Can get this information from cookie if we store email in cookie
+LOGGED_IN = False
+USERNAME = ""
+USER_ID = None
 
 
-@app.route('/login', methods=['POST', 'GET'])
+@app.route("/login", methods=["POST", "GET"])
 def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        with sqlite3.connect('database.db') as conn:
-            cur = conn.cursor()
-            cur.execute(f"SELECT userId, firstName FROM users WHERE email = '{email}'")
-            userId, firstName = cur.fetchone()
-        return redirect(url_for('success', name=firstName))
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+        user_info = get_user_info_login(email, password)
+        if not user_info:
+            return render_template(
+                "login.html", error_message="Invalid login credentials"
+            )
+        global LOGGED_IN, USERNAME, USER_ID
+        LOGGED_IN = True
+        USERNAME = user_info[1]
+        USER_ID = user_info[0]
+        return redirect(url_for("success", name=USERNAME))
     else:
-        return render_template('login.html')
+        return render_template("login.html")
 
-@app.route('/success/<name>')
+
+@app.route("/success/<name>")
 def success(name):
-    return 'welcome %s' % name
-
-@app.route('/')
-def home2():
-    loggedIn, firstName, noOfItems = getLoginDetails()
-    with sqlite3.connect('database.db') as conn:
-        cur = conn.cursor()
-        cur.execute('SELECT productId, name, price, description, image, stock FROM products')
-        itemData = cur.fetchall()
-        cur.execute('SELECT categoryId, name FROM categories')
-        categoryData = cur.fetchall()
-    itemData = parse(itemData) 
-    return render_template('home.html', itemData=itemData, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems, categoryData=categoryData)
+    cart_infos = get_object_store()
+    return render_template("home.html", username=name, cart_infos=cart_infos)
 
 
-if __name__ == '__main__':
+@app.route("/")
+def home():
+    if not LOGGED_IN:
+        return redirect(url_for("login"))
+    return redirect(url_for("success", name=USERNAME))
+
+
+@app.route("/add-to-cart", methods=["POST"])
+def add_to_cart():
+    object_ids = request.form.keys()
+    for object_id in object_ids:
+        add_obj_to_cart(USER_ID, object_id)
+    return redirect(url_for("success", name=USERNAME))
+
+@app.route("/remove-from-cart", methods=["POST"])
+def remove_from_cart():
+    object_ids = request.form.keys()
+    for object_id in object_ids:
+        remove_obj_from_cart(USER_ID, object_id)
+    return redirect(url_for("view_cart"))
+
+
+@app.route("/cart")
+def view_cart():
+    print("HELLOOO")
+    cart_infos = get_user_cart(USER_ID)
+    print(cart_infos)
+    return render_template("cart.html", cart_infos=cart_infos)
+
+
+if __name__ == "__main__":
     app.run(debug=True, port=8080)
