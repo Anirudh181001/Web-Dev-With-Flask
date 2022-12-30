@@ -9,7 +9,7 @@
 <body>
     <div><h1>Welcome back {{ username }}</h1></div>
 
-    <form action="http://localhost:8080/cart" method="get">
+    <form action="{{ url_for('view_cart') }}" method="get">
         <input type="submit" value="View Cart">
     </form>
 
@@ -19,7 +19,7 @@
             height="400"></p>
         <p>Description: {{ description }} </p>
         <p>Num in stock: {{ num_in_stock }} </p>
-        <form action="http://localhost:8080/add-to-cart" method="post">
+        <form action="{{ url_for('add_to_cart') }}" method="post">
             <input type="submit" value="add to cart" name="{{ object_id }}">
         </form>
     {% endfor %}

@@ -67,7 +67,7 @@ def view_cart():
     print("HELLOOO")
     cart_infos = get_user_cart(USER_ID)
     print(cart_infos)
-    return render_template("cart.html", cart_infos=cart_infos)
+    return render_template("cart.html", cart_infos=cart_infos, username=USERNAME)
 
 
 if __name__ == "__main__":
