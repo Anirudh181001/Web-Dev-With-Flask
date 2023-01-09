@@ -16,12 +16,11 @@ def add_obj_to_cart(user_id, object_id):
     with sqlite3.connect('database.db') as conn:
         cur = conn.cursor()
         cur.execute(f"UPDATE Stock SET num_in_stock = num_in_stock - 1 WHERE object_id = {object_id}")
-        cur.execute(f"SELECT object_id FROM CART WHERE user_id = {user_id}")
-        cart_infos = cur.fetchall()
-        for _object_id in cart_infos:
-            if _object_id[0] == object_id:
-                cur.execute(f"UPDATE Cart SET num_in_cart = num_in_cart + 1 WHERE object_id = {object_id} AND user_id = {user_id}")
-                return 
+        cur.execute(f"SELECT object_id FROM CART WHERE user_id = {user_id} AND object_id = {object_id}")
+        cart_info = cur.fetchone()
+        if cart_info:
+            cur.execute(f"UPDATE Cart SET num_in_cart = num_in_cart + 1 WHERE object_id = {object_id} AND user_id = {user_id}")
+            return 
         cur.execute(f"INSERT INTO Cart(user_id, object_id, num_in_cart) VALUES({user_id}, {object_id}, 1)")
 
         conn.commit()
@@ -30,17 +29,21 @@ def add_obj_to_cart(user_id, object_id):
 def get_user_cart(user_id):
     with sqlite3.connect('database.db') as conn:
         cur = conn.cursor()
-        cur.execute(f"SELECT Stock.object_id, c.num_in_cart, Stock.object_name, Stock.description, Stock.object_image_url, Stock.object_name FROM (SELECT * FROM Cart WHERE user_id = {user_id}) AS c INNER JOIN Stock ON c.object_id = Stock.object_id WHERE c.num_in_cart > 0")
+        cur.execute(f"""SELECT Stock.object_id, c.num_in_cart, Stock.object_name, Stock.description, Stock.object_image_url, Stock.object_name FROM 
+        (
+            SELECT * FROM Cart WHERE user_id = {user_id}
+            ) AS c 
+            INNER JOIN Stock ON c.object_id = Stock.object_id 
+            WHERE c.num_in_cart > 0""")
         return cur.fetchall()
 
 def remove_obj_from_cart(user_id, object_id):
     with sqlite3.connect('database.db') as conn:
         cur = conn.cursor()
         cur.execute(f"UPDATE Stock SET num_in_stock = num_in_stock + 1 WHERE object_id = {object_id}")
-        cur.execute(f"SELECT object_id FROM CART WHERE user_id = {user_id}")
-        cart_infos = cur.fetchall()
-        for _object_id in cart_infos:
-            if _object_id[0] == object_id:
+        cur.execute(f"SELECT object_id FROM CART WHERE user_id = {user_id} AND object_id = {object_id}")
+        cart_info = cur.fetchone()
+        if cart_info:
                 cur.execute(f"UPDATE Cart SET num_in_cart = num_in_cart - 1 WHERE object_id = {object_id} AND user_id = {user_id}")
                 return 
 
