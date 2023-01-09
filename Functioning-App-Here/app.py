@@ -8,7 +8,7 @@ from repository import (
 )
 
 app = Flask(__name__)
-app.secret_key = "Anirudh is the coolest"
+app.secret_key = "THIS IS A SECRET KEY"
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
